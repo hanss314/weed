@@ -10,3 +10,16 @@ f
 fun fst(a,b) = a
 fst(34,0)
 fst(34,34/0)
+
+fun rand_triple(x) = x+x+x
+fun unrand_triple(x) = fix x in x+x+x
+
+rand_triple(d6)
+unrand_triple(d6)
+
+let const_one = fst(1)
+
+const_one(1/0)
+const_one(34)
+
+3()

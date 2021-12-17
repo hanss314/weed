@@ -25,6 +25,7 @@ def handle_let(stmt, globs, scope, target):
 
     target |= new_dict
 
+# TODO: replace this with proper builtin lookup table
 def run_builtin(func, args, globs, scope):
     if func.name == '-': expected = [1,2]
     else: expected = [2]
@@ -46,7 +47,12 @@ def run_builtin(func, args, globs, scope):
         return literals.Integer(args[0].value // args[1].value)
 
 
+# TODO: Refactor this to methods of classes
 def evaluate(expr, globs, scope, eager=True):
+    # TODO: calculate required closures and only copy the required values
+    # TODO: do something smart here and replace scope with an array
+    # This will likely require calculating the closures before runtime
+    # and applying the calculated closures during evaluation
     if isinstance(expr, ast.Lambda):
         expr = runtime.Partial(expr.body, dict(scope), expr.args, [])
 

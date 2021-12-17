@@ -71,6 +71,7 @@ paren_expr = LPAR + expression + RPAR
 arith_atom = paren_expr | literal | identifier
 
 dice_n = ("d"+arith_atom.leave_whitespace(False)).set_parse_action(lambda tok: literals.Dice(tok[1]))
+# TODO: replace this with a proper full-fledged dice notation
 dice = dice_n
 
 atom = dice | arith_atom
