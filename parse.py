@@ -63,7 +63,7 @@ alpha_id = Regex(r'[a-zA-Z_]+')
 symbo_id = Regex(r'[!@#$%^&*+=:|?/<>~`][!@#$%^&*+=:|?/<>~`\-]*')
 identifier = (alpha_id | symbo_id).set_parse_action(non_reserved_id)
 
-integer_lit = Regex(r'[1-9][0-9]*').set_parse_action(lambda tok: literals.Integer(tok[0]))
+integer_lit = Regex(r'([1-9][0-9]*)|0').set_parse_action(lambda tok: literals.Integer(tok[0]))
 literal = integer_lit
 
 paren_expr = LPAR + expression + RPAR

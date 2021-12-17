@@ -5,5 +5,8 @@ fun f {
     l
 }
 f
-3(d2)
-3*d2
+3(d6)
+3*d6
+fun fst(a,b) = a
+fst(34,0)
+fst(34,34/0)
