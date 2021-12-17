@@ -51,7 +51,7 @@ def let_expr_action(tok):
     return ast.Block([tok[0], tok[1]])
 
 def function_action(tok):
-    return ast.Let([tok[0]], [ast.Lambda(tok[1], tok[2])])
+    return ast.Let([tok[0]], [ast.Lambda(tok[1], tok[2])], False)
 
 def lambda_action(tok):
     return ast.Lambda(tok[0], tok[1])

@@ -1,5 +1,11 @@
+import runtime
+
 # These should be immutable
-class Integer:
+class Literal:
+    def generate_runtime(self, closure, arguments):
+        return self
+
+class Integer(Literal):
     def __init__(self, value=0):
         self._value = int(value)
 
@@ -10,7 +16,7 @@ class Integer:
     def __str__(self):
         return str(self._value)
 
-class Floating:
+class Floating(Literal):
     def __init__(self, value=0.0):
         self._value = float(value)
 
@@ -21,7 +27,7 @@ class Floating:
     def __str__(self):
         return str(self._value)
 
-class String:
+class String(Literal):
     def __init__(self, value=""):
         self._value = value
 
@@ -32,7 +38,7 @@ class String:
     def __str__(self):
         return repr(self._value)
 
-class Bool:
+class Bool(Literal):
     def __init__(self, value=False):
         self._value = value
 
@@ -54,6 +60,12 @@ class Identifier:
     def __str__(self):
         return self._name
 
+    def __eq__(self, other):
+        return self.name == other.name
+
+    def __hash__(self):
+        return hash(self.name)
+
 class Dice:
     def __init__(self, m):
         self.max = m
@@ -61,7 +73,7 @@ class Dice:
     def __str__(self):
         return f"d{self.max}"
 
-class Builtin:
+class Builtin(Literal):
     def __init__(self, name):
         self.name = name
     

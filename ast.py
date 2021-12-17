@@ -1,10 +1,15 @@
+from pyparsing import ParseException
+import runtime
+
 class Let:
-    def __init__(self, left, right):
+    def __init__(self, left, right, eager=True):
         self.left = left
         self.right = right
+        self.eager = eager
     
     def __str__(self):
-        return f'let ({",".join(map(str, self.left))}) = ({",".join(map(str,self.right))})'
+        typ = 'let' if self.eager else 'fun'
+        return f'{typ} ({",".join(map(str, self.left))}) = ({",".join(map(str,self.right))})'
 
 class Lambda:
     def __init__(self, args, body):
@@ -24,6 +29,11 @@ class FuncApp:
 
 class Block:
     def __init__(self, statements):
+        if len(statements) == 0:
+            raise ParseException('Empty block')
+        if isinstance(statements[-1], Let):
+            raise ParseException("Final block in a statement must be an expression")
+
         self.statements = statements
 
     def __str__(self):

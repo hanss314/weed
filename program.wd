@@ -1,0 +1,9 @@
+fun f {
+    let a = 1
+    fun l = a
+    let a = 2
+    l
+}
+f
+3(d2)
+3*d2
