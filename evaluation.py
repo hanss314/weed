@@ -73,7 +73,7 @@ def evaluate(expr, globs, scope, eager=True):
     # and applying the calculated closures during evaluation
     if isinstance(expr, ast.Lambda):
         expr = runtime.Partial(expr.body, dict(scope), expr.args, [])
-    elif not eager and not isinstance(expr, literals.Literal):
+    elif not eager and not isinstance(expr, literals.Literal) and not isinstance(expr, literals.Partial):
         return runtime.Partial(expr, dict(scope), [], [])
 
     if not eager: return expr
