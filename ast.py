@@ -27,14 +27,15 @@ class FuncApp:
     def __str__(self):
         return f'{self.func}({",".join(map(str, self.args))})'
 
+    def __repr__(self):
+        return str(self)
+
 class Block:
     def __init__(self, statements):
-        if len(statements) == 0:
-            raise ParseException('Empty block')
-        if isinstance(statements[-1], Let):
-            raise ParseException("Final block in a statement must be an expression")
-
-        self.statements = statements
+        if statements and isinstance(statements[-1], Block):
+            self.statements = statements[:-1] + statements[-1].statements
+        else:
+            self.statements = statements
 
     def __str__(self):
         return '{\n' + f'{chr(10).join(map(str, self.statements))}' + '\n}'
@@ -45,3 +46,12 @@ class Return:
 
     def __str__(self):
         return f'return {self.statement}'
+
+class If:
+    def __init__(self, cond, pos, neg):
+        self.cond = cond
+        self.pos = pos
+        self.neg = neg
+
+    def __str__(self):
+        return f'if {self.cond} then {self.pos} else {self.neg}'

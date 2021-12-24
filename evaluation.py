@@ -8,10 +8,28 @@ def execute(statement_list):
     for statement in statement_list:
         if isinstance(statement, ast.Let):
             handle_let(statement, globs, {}, globs)
+        elif isinstance(statement, ast.Block):
+            top_level_block(statement, globs)
         else:
             value = evaluate(statement, globs, {}, True)
             print(value)
-        
+
+def top_level_block(block, globs):
+    scope = {}
+    for statement in block.statements[:-1]:
+        if isinstance(statement, ast.Let):
+            handle_let(statement, globs, scope, scope)
+        else:
+            value = evaluate(statement, globs, scope, True)
+            print(value)
+
+    if block.statements:
+        stmt = block.statements[-1]
+        if isinstance(stmt, ast.Let):
+            handle_let(stmt, globs, scope, globs)
+        else:
+            print(evaluate(stmt, globs, scope, True))
+
 
 def handle_let(stmt, globs, scope, target):
     varnames = stmt.left
@@ -55,6 +73,8 @@ def evaluate(expr, globs, scope, eager=True):
     # and applying the calculated closures during evaluation
     if isinstance(expr, ast.Lambda):
         expr = runtime.Partial(expr.body, dict(scope), expr.args, [])
+    elif not eager and not isinstance(expr, literals.Literal):
+        return runtime.Partial(expr, dict(scope), [], [])
 
     if not eager: return expr
 
@@ -91,7 +111,7 @@ def evaluate(expr, globs, scope, eager=True):
         if not args: return func;
 
         func = runtime.Partial(func.body, func.closure, func.arity, func.args+args)
-        return evaluate(func, scope, globs)
+        return evaluate(func, globs, scope)
 
     elif isinstance(expr, runtime.Partial):
         if len(expr.args) >= len(expr.arity):
@@ -104,21 +124,28 @@ def evaluate(expr, globs, scope, eager=True):
 
             result = evaluate(expr.body, globs, clos, True)
             if not new_args: return result
-            return evaluate(ast.FuncApp(result, new_args))
+            return evaluate(ast.FuncApp(result, new_args), globs, clos, True)
         else:
             return expr
-            
+
+    elif isinstance(expr, ast.If):
+        cond = evaluate(expr.cond, globs, scope, True)
+        return evaluate(expr.pos if cond.value else expr.neg, globs, scope, True)
 
     elif isinstance(expr, ast.Block):
-        scope = dict(scope)
+        new_scope = dict(scope)
         curr = None
-        for stmt in expr.statements:
+        for n, stmt in enumerate(expr.statements):
             if isinstance(stmt, ast.Let):
-                handle_let(stmt, globs, scope, scope)
+                if n == len(expr.statements)-1:
+                    handle_let(stmt, globs, new_scope, scope)
+                else:
+                    handle_let(stmt, globs, new_scope, new_scope)
+
             elif isinstance(stmt, ast.Return):
-                return evaluate(statement.statement, globs, scope, True)
+                return evaluate(stmt.statement, globs, new_scope, True)
             else:
-                curr = evaluate(stmt, globs, scope, True)
+                curr = evaluate(stmt, globs, new_scope, True)
 
         return curr 
 

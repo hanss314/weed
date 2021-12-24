@@ -1,0 +1,8 @@
+fun ida(a) {
+    let x = 1;
+    idx(a);
+}
+
+fun idx(x) = x;
+
+ida(3)

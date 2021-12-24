@@ -8,7 +8,7 @@ RESERVED = [
     "@", ".", "**", "*", "/", "//", "%", "+", "-", 
     "=", "!=", ">", ">=", "<", "<=", 
     '&', '^', '|', '&&', '||', '$',
-    'let', 'fun', 'fix', 'return', 'in',
+    'let', 'fun', 'fix', 'return', 'in', 'if', 'then', 'else',
 ]
 
 LPAR, RPAR = map(Suppress, "()")
@@ -22,6 +22,9 @@ FUN = Suppress(Keyword('fun'))
 IN = Suppress(Keyword('in'))
 RETURN = Suppress(Keyword('return'))
 LAMBDA = Suppress("->")
+IF = Suppress(Keyword('if'))
+THEN = Suppress(Keyword('then'))
+ELSE = Suppress(Keyword('else'))
 
 LINE_SEP = Suppress(OneOrMore(Literal(';') | Literal('\n')))
 
@@ -93,27 +96,48 @@ multi_let = LET + Group(id_tuple) + EQUALS + Group(expr_tuple)
 single_fix = FIX + Group(identifier)
 multi_fix = FIX + Group(id_tuple)
 
-let_stmt = multi_let | single_let | single_fix | multi_fix
-let_expr = let_stmt + IN + expression
+fun_stmt = Forward()
 
-let_stmt.set_parse_action(let_stmt_action)
-let_expr.set_parse_action(let_expr_action)
+let_header = multi_let | single_let | single_fix | multi_fix
+let_list = delimited_list(let_header, delim=IN) 
+let_stmt = (let_list + Optional(IN+fun_stmt)).set_parse_action(ast.Block)
+let_expr = (let_list + IN + expression).set_parse_action(ast.Block)
+
+let_header.set_parse_action(let_stmt_action)
+#let_expr.set_parse_action(let_expr_action)
 
 return_stmt = (RETURN + expression).set_parse_action(lambda tok: ast.Return(tok[0]))
-stmt_block = LBRACE + Suppress(ZeroOrMore('\n')) + \
-    delimited_list(statement | return_stmt, delim=LINE_SEP, allow_trailing_delim=True) + RBRACE
-stmt_block.set_parse_action(ast.Block)
+
+expr_block_stmt = statement | return_stmt
+expr_block = LBRACE + Suppress(ZeroOrMore('\n')) + \
+    Optional(
+            delimited_list(expr_block_stmt + FollowedBy(LINE_SEP + expr_block_stmt), delim=LINE_SEP) + \
+            Suppress(OneOrMore(LINE_SEP))
+    ) + \
+    (return_stmt | expression) + Suppress(ZeroOrMore(LINE_SEP)) + RBRACE
+expr_block.set_parse_action(ast.Block)
 
 fun_header = FUN + identifier + Group(Optional(LPAR + Optional(delimited_list(identifier)) + RPAR))
-fun_stmt = (fun_header + EQUALS + expression) | (fun_header + stmt_block)
+fun_stmt << ((fun_header + EQUALS + expression) | (fun_header + expr_block))
 fun_stmt.set_parse_action(function_action)
 
-sub_lamb = (let_expr | arith_expr | stmt_block)
+sub_lamb = (let_expr | arith_expr | expr_block)
 lamb = Forward()
 id_or_list = identifier | (LPAR + Optional(delimited_list(identifier)) + RPAR)
 lamb << ((Group(id_or_list) + LAMBDA + lamb).set_parse_action(lambda_action) | sub_lamb)
 
-expression << lamb
-statement << (expression | let_stmt | fun_stmt | stmt_block)
+if_subexpr = lamb
+if_expr = IF + if_subexpr + THEN + if_subexpr + ELSE + if_subexpr
+if_expr.set_parse_action(lambda toks: ast.If(*toks))
 
-program = Suppress(ZeroOrMore('\n')) + delimited_list(statement, delim=LINE_SEP, allow_trailing_delim=True)
+expression << (lamb | if_expr)
+statement << (expression | let_stmt | fun_stmt)
+
+
+top_block = LBRACE + Suppress(ZeroOrMore('\n')) + \
+    delimited_list(statement, delim=LINE_SEP, allow_trailing_delim=True) + RBRACE
+top_block.set_parse_action(ast.Block)
+
+
+
+program = Suppress(ZeroOrMore('\n')) + delimited_list(top_block | statement, delim=LINE_SEP, allow_trailing_delim=True)

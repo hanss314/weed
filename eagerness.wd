@@ -1,0 +1,5 @@
+let t = d6 in fun narrow = t+d6
+
+narrow
+let t=100
+narrow

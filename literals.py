@@ -5,6 +5,9 @@ class Literal:
     def generate_runtime(self, closure, arguments):
         return self
 
+    def __repr__(self):
+        return str(self)
+
 class Integer(Literal):
     def __init__(self, value=0):
         self._value = int(value)
@@ -59,6 +62,9 @@ class Identifier:
     
     def __str__(self):
         return self._name
+
+    def __repr__(self):
+        return str(self)
 
     def __eq__(self, other):
         return self.name == other.name
